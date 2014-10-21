@@ -42,6 +42,8 @@ class SecurityGroupScaleHealer():
                 self._tenants[id] = self.keystone.tenants.get(id)
             except keystoneclient.openstack.common.apiclient.exceptions.NotFound:
                 self._tenants[id] = None
+            except keystoneclient.apiclient.exceptions.NotFound:
+                self._tenants[id] = None
 
         return self._tenants[id]
 
