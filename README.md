@@ -13,7 +13,9 @@ Download, and sudo python setup.py install
 then run:
 
 source ~/keystone_adminrc
+
 neutrontool --help
+
 neutrontool report
 
 ## Dependencies
