@@ -16,7 +16,12 @@ source ~/keystone_adminrc
 
 neutrontool --help
 
-neutrontool report
+neutrontool sg-rpc-mitigation-report
+
+neutrontool sg-rpc-mitigation-script > sg_mitigation_script.sh
+
+less sg_mitigation_script.sh 
+
 
 ## Dependencies
 
