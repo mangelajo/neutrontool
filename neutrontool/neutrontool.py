@@ -102,7 +102,7 @@ class SecurityGroupScaleHealer():
         sgs = []
 
         for sg_id, sg in self._sgs.iteritems():
-            rules_rgid = [self._iter_rules_with_remote_gid(sg.security_group_rules)]
+            rules_rgid = list(self._iter_rules_with_remote_gid(sg.security_group_rules))
             if len(rules_rgid)>0:
                 yield sg
 
@@ -110,16 +110,15 @@ class SecurityGroupScaleHealer():
 
         for bad_sg in self.iter_sgs_with_remote_group_ids():
             unused_sg = len(bad_sg.ports)==0
-            used_str = "(NOT USED)" if unused_sg else ""
-            bad_sg.used_str = used_str
             tenant = self._get_tenant(bad_sg.tenant_id)
 
+            # ignore totally disconnected/dangling security groups
             if unused_sg and not tenant:
                 continue
 
             bad_sg.tenant_name = (tenant.name if tenant
                                   else "<unknown: %s>" % bad_sg.tenant_id)
-
+            bad_sg.used_str = "(NOT USED)" if unused_sg else ""
             print color('header',"\nsecurity_group %(id)s (%(name)s) has remote "
                                  "gid rules %(used_str)s\n  tenant: "
                                  "%(tenant_name)s" % bad_sg)
@@ -128,12 +127,12 @@ class SecurityGroupScaleHealer():
                 ip_addresses = ", ".join([ip['ip_address'] for ip in port.fixed_ips])
                 port_info = {'id': port.id, 'ips': ip_addresses}
                 print ("\tport %(id)s with ips: %(ips)s" % port_info)
-
             self._report_equivalent_subnet_CIDRs(bad_sg)
 
     def _report_equivalent_subnet_CIDRs(self, sg):
         subnets = self._get_remote_subnets_from_remote_gid_rules(sg)
-        print color('warning',"  Equivalent remote subnet CIDRs:")
+        if len(subnets)>0:
+            print color('warning',"  Equivalent remote subnet CIDRs:")
         for __, subnet in subnets.iteritems():
             print color('warning',"    subnet: %(name)s\tCIDR: %(cidr)s" % subnet)
 
@@ -164,9 +163,9 @@ def build_parser():
         print ""
         print "Commands:"
         print ""
-        print ("report : Report security with potential scale issues in\n"
-               "         RHOS4/5 (H/K), due to references to other groups\n"
-               "         in rules\n")
+        print ("report : Report security groups with potential scale issues\n"
+               "         in RHOS4/5 (H/K), due to references to other\n"
+               "         groups in rules\n")
         print ""
     parser = osclients.build_parser(extra_help)
     parser.add_argument("command",
